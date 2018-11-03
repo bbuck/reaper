@@ -32,9 +32,7 @@ namespace Reaper
 
         public override bool ShouldActivate()
         {
-            bool result = Physics2D.OverlapCircle(Base.position, overlapRadius, groundLayer);
-            Debug.Log(result);
-            return result;
+            return Physics2D.OverlapCircle(Base.position, overlapRadius, groundLayer);
         }
 
         public override void Activated()

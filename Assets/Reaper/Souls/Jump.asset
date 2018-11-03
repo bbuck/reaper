@@ -11,4 +11,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b40c1b16df6f345c0a3457218adca500, type: 3}
   m_Name: Jump
   m_EditorClassIdentifier: 
-  jumpForce: 5
+  jumpForce: 8
+  maxJumpTime: 0.35
+  overlapRadius: 0.1
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 256
