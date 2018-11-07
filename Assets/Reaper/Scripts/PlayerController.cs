@@ -16,6 +16,11 @@ namespace Reaper
 
         [Header("Movement")]
         public float movementSpeed = 5f;
+        public Vector2 damageReflectionForce = new Vector2(5f, 3f);
+
+        [Header("Misc")]
+        public float damageDuration = 0.15f;
+        public float recoveryDuration = 0.5f;
 
         [Header("Debug")]
         public Soul debugSoul;
@@ -27,7 +32,10 @@ namespace Reaper
 
         #region private properties
 
-        private bool ActivatingSoul { get; set; }
+        private bool _activatingSoul = false;
+        private Vector2 _damageVelocity = Vector2.zero;
+        private float _damageTimeRemaining = 0f;
+        private float _recoveryDurationRemaining = 0f;
 
         #endregion private properties
 
@@ -50,16 +58,56 @@ namespace Reaper
                 ActiveSoul.Initialize(this);
             }
 
-            ActivatingSoul = false;
+            _activatingSoul = false;
         }
 
         private void Update()
         {
+            if (_recoveryDurationRemaining > 0f)
+            {
+                if (_damageTimeRemaining > 0f)
+                {
+                    _damageTimeRemaining -= Time.deltaTime;
+                    if (_damageTimeRemaining < (damageDuration / 2f))
+                    {
+                        _damageVelocity.y = 0f;
+                    }
+                    Motor.TargetVelocity = _damageVelocity;
+                }
+                else
+                {
+                    Motor.TargetVelocity = Vector2.zero;
+                }
+                _recoveryDurationRemaining -= Time.deltaTime;
+
+                return;
+            }
+
             HandleInput();
             HandleActiveSoul();
         }
 
         #endregion lifecycle methods
+
+        #region event methods
+
+        private void OnCollisionEnter2D(Collision2D collision)
+        {
+            if (collision.gameObject.CompareTag("Enemy"))
+            {
+                var enemy = collision.gameObject.GetComponent<EnemyController>();
+                // TODO: Damage player from enemy data
+                // Knock back player
+                Vector2 velocity = damageReflectionForce;
+                velocity.x *= transform.right.x * -1;
+
+                _damageVelocity = velocity;
+                _damageTimeRemaining = damageDuration;
+                _recoveryDurationRemaining = recoveryDuration;
+            }
+        }
+
+        #endregion event methods
 
         #region private methods
 
@@ -67,6 +115,15 @@ namespace Reaper
         {
             Vector2 velocity = Vector2.zero;
             velocity.x = Input.GetAxis("Horizontal") * movementSpeed;
+
+            if (velocity.x > 0)
+            {
+                transform.rotation = Quaternion.Euler(Vector3.zero);
+            }
+            else if (velocity.x < 0)
+            {
+                transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+            }
 
             Motor.TargetVelocity = velocity;
         }
@@ -86,7 +143,7 @@ namespace Reaper
                 }
             }
 
-            if (ActivatingSoul)
+            if (_activatingSoul)
             {
                 if (ActiveSoul.ShouldDeactivate())
                 {
@@ -106,19 +163,19 @@ namespace Reaper
 
         private void ActivateSoul()
         {
-            if (!ActivatingSoul)
+            if (!_activatingSoul)
             {
                 ActiveSoul.Activated();
-                ActivatingSoul = true;
+                _activatingSoul = true;
             }
         }
 
         private void DeactivateSoul()
         {
-            if (ActivatingSoul)
+            if (_activatingSoul)
             {
                 ActiveSoul.Deactivated();
-                ActivatingSoul = false;
+                _activatingSoul = false;
             }
         }
 

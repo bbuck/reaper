@@ -16,7 +16,7 @@ namespace BCore
 
         #region lifecycle methods
 
-        protected void Awake()
+        protected virtual void Awake()
         {
             rigidbody = GetComponent<Rigidbody2D>();
 
